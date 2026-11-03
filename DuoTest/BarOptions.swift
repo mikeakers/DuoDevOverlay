@@ -14,14 +14,12 @@ struct BarOptions: Equatable {
     /// A navigation title (text, so it stays horizontal).
     var title = false
     var tabBar = false
-    /// When on, the app sets the navigation bar's visibility itself: visible
-    /// while it has a toolbar or title, hidden otherwise. When off, the system
-    /// decides (`.automatic`).
-    var forceNavigationBar = true
 
+    /// Visible while the bar has a toolbar or title, hidden otherwise. (On
+    /// iPhone Duo this matches what `.automatic` does, so there's no switch
+    /// for it.)
     var navigationBarVisibility: Visibility {
-        guard forceNavigationBar else { return .automatic }
-        return toolbar || title ? .visible : .hidden
+        toolbar || title ? .visible : .hidden
     }
 
     var tabBarVisibility: Visibility {

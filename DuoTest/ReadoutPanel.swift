@@ -36,7 +36,6 @@ struct ReadoutPanel: View {
             Toggle("Toolbar", isOn: $options.toolbar)
             Toggle("Nav title", isOn: $options.title)
             Toggle("Tab bar", isOn: $options.tabBar)
-            Toggle("Force nav bar", isOn: $options.forceNavigationBar)
 
             Divider()
 
