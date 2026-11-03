@@ -8,14 +8,27 @@
 import SwiftUI
 
 struct ContentView: View {
+    @State private var showToolbar = false
+
     var body: some View {
-        VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+        NavigationStack {
+            RegionCanvas(showToolbar: $showToolbar)
+                .navigationTitle("Regions")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar(showToolbar ? .visible : .hidden, for: .navigationBar)
+                .toolbar {
+                    if showToolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Close", systemImage: "xmark") {}
+                        }
+                        ToolbarItemGroup(placement: .primaryAction) {
+                            Button("Share", systemImage: "square.and.arrow.up") {}
+                            Button("Favorite", systemImage: "star") {}
+                            Button("More", systemImage: "ellipsis") {}
+                        }
+                    }
+                }
         }
-        .padding()
     }
 }
 
