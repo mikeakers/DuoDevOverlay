@@ -25,6 +25,8 @@ struct ReadoutPanel: View {
                 .onGeometryChange(for: CGFloat.self) { $0.size.height } action: { contentHeight = $0 }
         }
         .scrollBounceBehavior(.basedOnSize)
+        // Only scroll when the contents overflow, so a drag normally moves the panel.
+        .scrollDisabled(contentHeight <= maxSize.height)
         .font(.caption.monospaced())
         .frame(width: min(280, maxSize.width), height: min(contentHeight, maxSize.height))
         .background(.regularMaterial, in: .rect(cornerRadius: 12))

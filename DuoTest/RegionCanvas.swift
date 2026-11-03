@@ -37,6 +37,8 @@ struct RegionCanvas: View {
     @State private var hinge: HingeInfo?
     @State private var hingeReceived = false
     @State private var panelSize: CGSize = .zero
+    @State private var panelPlacement: PanelPlacement = .automatic
+    @GestureState private var panelDrag: CGSize = .zero
 
     var body: some View {
         GeometryReader { safeProxy in
@@ -48,7 +50,11 @@ struct RegionCanvas: View {
             let insets = RegionSnapshot.insets(full: proxy.frame(in: .global),
                                                safe: safeProxy.frame(in: .global))
             let snapshot = RegionSnapshot(proxy, safeArea: insets)
-            let panelOrigin = snapshot.panelOrigin(for: panelSize)
+            // Where the panel rests, and where it is right now while dragged.
+            let restingOrigin = snapshot.panelOrigin(for: panelSize, placement: panelPlacement)
+            let panelOrigin = snapshot.clampedPanelOrigin(
+                CGPoint(x: restingOrigin.x + panelDrag.width, y: restingOrigin.y + panelDrag.height),
+                panelSize: panelSize)
 
             ZStack(alignment: .topLeading) {
                 Color(white: 0.9)
@@ -63,11 +69,24 @@ struct RegionCanvas: View {
 
                 ReadoutPanel(snapshot: snapshot, hinge: hinge, hingeReceived: hingeReceived,
                              maxSize: snapshot.panelMaxSize(), options: $options)
+                    .accessibilityElement(children: .contain)
+                    .accessibilityIdentifier("readoutPanel")
                     .onGeometryChange(for: CGSize.self) { $0.size } action: { panelSize = $0 }
+                    .gesture(
+                        DragGesture(minimumDistance: 8, coordinateSpace: .global)
+                            .updating($panelDrag) { value, drag, _ in drag = value.translation }
+                            .onEnded { value in
+                                panelPlacement = .manual(CGPoint(x: restingOrigin.x + value.translation.width,
+                                                                 y: restingOrigin.y + value.translation.height))
+                            }
+                    )
+                    .onTapGesture(count: 2) { panelPlacement = .automatic }
                     .offset(x: panelOrigin.x, y: panelOrigin.y)
             }
             .animation(.snappy, value: snapshot)
-            .animation(.snappy, value: panelOrigin)
+            // Animate when the resting place changes (fold, rotate, reset),
+            // but not while following a finger.
+            .animation(.snappy, value: restingOrigin)
         }
         .ignoresSafeArea()
         }

@@ -205,3 +205,28 @@ struct ReviewFixTests {
         #expect(snapshot.panelMaxSize() == .zero)
     }
 }
+
+@MainActor
+struct PanelPlacementModeTests {
+    let snapshot = RegionSnapshot(size: CGSize(width: 800, height: 600), safeArea: EdgeInsets(), regions: [])
+    let panel = CGSize(width: 200, height: 100)
+
+    @Test func automaticPlacementMatchesClearestCorner() {
+        #expect(snapshot.panelOrigin(for: panel, placement: .automatic) == snapshot.panelOrigin(for: panel))
+    }
+
+    @Test func manualPlacementKeepsAnOnScreenPoint() {
+        let point = CGPoint(x: 300, y: 250)
+        #expect(snapshot.panelOrigin(for: panel, placement: .manual(point)) == point)
+    }
+
+    @Test func manualPlacementIsClampedOnScreen() {
+        #expect(snapshot.panelOrigin(for: panel, placement: .manual(CGPoint(x: 700, y: 550))) == CGPoint(x: 600, y: 500))
+        #expect(snapshot.panelOrigin(for: panel, placement: .manual(CGPoint(x: -40, y: -10))) == .zero)
+    }
+
+    @Test func clampingPanelLargerThanViewPinsToOrigin() {
+        let small = RegionSnapshot(size: CGSize(width: 150, height: 80), safeArea: EdgeInsets(), regions: [])
+        #expect(small.clampedPanelOrigin(CGPoint(x: 50, y: 50), panelSize: panel) == .zero)
+    }
+}

@@ -77,6 +77,13 @@ struct InsetBand: Identifiable, Equatable {
     }
 }
 
+/// Where the readout panel sits: chosen automatically, or where the user
+/// dragged it.
+enum PanelPlacement: Equatable {
+    case automatic
+    case manual(CGPoint)
+}
+
 struct RegionSnapshot: Equatable {
     var size: CGSize
     var safeArea: EdgeInsets
@@ -148,6 +155,22 @@ struct RegionSnapshot: Equatable {
         // `min(by:)` keeps the first of equal elements, so ties go to the
         // earlier (preferred) corner.
         return candidates.min { overlap($0) < overlap($1) } ?? candidates[0]
+    }
+
+    /// The panel's origin for a placement: the clearest corner when
+    /// automatic, or the user's point kept fully on screen when manual.
+    func panelOrigin(for panelSize: CGSize, placement: PanelPlacement) -> CGPoint {
+        switch placement {
+        case .automatic: panelOrigin(for: panelSize)
+        case .manual(let point): clampedPanelOrigin(point, panelSize: panelSize)
+        }
+    }
+
+    /// `origin` moved just enough for the panel to lie inside the view. A
+    /// panel bigger than the view is pinned to the top-leading corner.
+    func clampedPanelOrigin(_ origin: CGPoint, panelSize: CGSize) -> CGPoint {
+        CGPoint(x: min(max(0, origin.x), max(0, size.width - panelSize.width)),
+                y: min(max(0, origin.y), max(0, size.height - panelSize.height)))
     }
 
     /// The largest panel that fits inside the safe area with `padding` on
