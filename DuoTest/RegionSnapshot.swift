@@ -149,6 +149,22 @@ struct RegionSnapshot: Equatable {
         // earlier (preferred) corner.
         return candidates.min { overlap($0) < overlap($1) } ?? candidates[0]
     }
+
+    /// The largest panel that fits inside the safe area with `padding` on
+    /// every side.
+    func panelMaxSize(padding: CGFloat = 12) -> CGSize {
+        CGSize(width: max(0, safeRect.width - 2 * padding),
+               height: max(0, safeRect.height - 2 * padding))
+    }
+
+    /// Safe-area insets as the distance from each edge of `full` to the same
+    /// edge of `safe` (both in one coordinate space). Never negative.
+    static func insets(full: CGRect, safe: CGRect) -> EdgeInsets {
+        EdgeInsets(top: max(0, safe.minY - full.minY),
+                   leading: max(0, safe.minX - full.minX),
+                   bottom: max(0, full.maxY - safe.maxY),
+                   trailing: max(0, full.maxX - safe.maxX))
+    }
 }
 
 /// Strokes a rect given in the container's coordinates. A zero-width or

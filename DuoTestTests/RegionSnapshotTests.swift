@@ -177,3 +177,31 @@ struct ReadoutTests {
         #expect(HingeInfo(status: .fullyOpen, degrees: 180).statusName == "fully open")
     }
 }
+
+@MainActor
+struct ReviewFixTests {
+    @Test func insetsFromFramesMeasureEachEdge() {
+        let full = CGRect(x: 0, y: 0, width: 466, height: 678)
+        let safe = CGRect(x: 0, y: 0, width: 382, height: 644)
+        #expect(RegionSnapshot.insets(full: full, safe: safe)
+                == EdgeInsets(top: 0, leading: 0, bottom: 34, trailing: 84))
+    }
+
+    @Test func insetsFromFramesNeverNegative() {
+        let full = CGRect(x: 10, y: 10, width: 100, height: 100)
+        let safe = CGRect(x: 0, y: 0, width: 200, height: 200)
+        #expect(RegionSnapshot.insets(full: full, safe: safe) == EdgeInsets())
+    }
+
+    @Test func panelMaxSizeFitsInsideSafeArea() {
+        let snapshot = RegionSnapshot(size: CGSize(width: 466, height: 678),
+                                      safeArea: EdgeInsets(top: 0, leading: 0, bottom: 34, trailing: 84),
+                                      regions: [])
+        #expect(snapshot.panelMaxSize() == CGSize(width: 358, height: 620))
+    }
+
+    @Test func panelMaxSizeNeverNegative() {
+        let snapshot = RegionSnapshot(size: CGSize(width: 20, height: 20), safeArea: EdgeInsets(), regions: [])
+        #expect(snapshot.panelMaxSize() == .zero)
+    }
+}

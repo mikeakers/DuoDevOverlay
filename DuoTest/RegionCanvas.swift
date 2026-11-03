@@ -20,18 +20,14 @@ extension RegionInfo {
 
 extension RegionSnapshot {
     /// Reads every region of both kinds, active and inactive, in physical
-    /// (unmirrored) coordinates of the proxy's view.
-    init(_ proxy: GeometryProxy) {
+    /// (unmirrored) coordinates of the proxy's view. `safeArea` is passed in
+    /// because a proxy under `.ignoresSafeArea()` reports zero insets.
+    init(_ proxy: GeometryProxy, safeArea: EdgeInsets) {
         let kinds: [ReservedRegion.Kind] = [.division, .occlusion]
         let regions = kinds.flatMap { kind in
             proxy.reservedRegions(kind: kind, options: .includeInactive, layoutDirectionBehavior: .fixed)
         }
-        self.init(size: proxy.size, safeArea: proxy.safeAreaInsets, regions: regions.map { RegionInfo($0) })
-    }
-
-    init(_ proxy: GeometryProxy, safeArea: EdgeInsets) {
-        self.init(proxy)
-        self.safeArea = safeArea
+        self.init(size: proxy.size, safeArea: safeArea, regions: regions.map { RegionInfo($0) })
     }
 }
 
@@ -45,7 +41,13 @@ struct RegionCanvas: View {
     var body: some View {
         GeometryReader { safeProxy in
         GeometryReader { proxy in
-            let snapshot = RegionSnapshot(proxy, safeArea: safeProxy.safeAreaInsets)
+            // The outer reader is laid out inside the safe area, so its frame
+            // *is* the safe rect; the insets are the gap between it and the
+            // full-screen inner reader. (Its own `safeAreaInsets` describe the
+            // insets around it, so they can't be subtracted from its frame.)
+            let insets = RegionSnapshot.insets(full: proxy.frame(in: .global),
+                                               safe: safeProxy.frame(in: .global))
+            let snapshot = RegionSnapshot(proxy, safeArea: insets)
             let panelOrigin = snapshot.panelOrigin(for: panelSize)
 
             ZStack(alignment: .topLeading) {
@@ -60,7 +62,7 @@ struct RegionCanvas: View {
                 }
 
                 ReadoutPanel(snapshot: snapshot, hinge: hinge, hingeReceived: hingeReceived,
-                             showToolbar: $showToolbar)
+                             maxSize: snapshot.panelMaxSize(), showToolbar: $showToolbar)
                     .onGeometryChange(for: CGSize.self) { $0.size } action: { panelSize = $0 }
                     .offset(x: panelOrigin.x, y: panelOrigin.y)
             }
