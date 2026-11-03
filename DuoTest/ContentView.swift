@@ -13,8 +13,6 @@ struct ContentView: View {
     var body: some View {
         NavigationStack {
             RegionCanvas(showToolbar: $showToolbar)
-                .navigationTitle("Regions")
-                .navigationBarTitleDisplayMode(.inline)
                 .toolbar(showToolbar ? .visible : .hidden, for: .navigationBar)
                 .toolbar {
                     if showToolbar {
