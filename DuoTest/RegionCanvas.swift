@@ -32,7 +32,7 @@ extension RegionSnapshot {
 }
 
 struct RegionCanvas: View {
-    @Binding var showToolbar: Bool
+    @Binding var options: BarOptions
 
     @State private var hinge: HingeInfo?
     @State private var hingeReceived = false
@@ -62,7 +62,7 @@ struct RegionCanvas: View {
                 }
 
                 ReadoutPanel(snapshot: snapshot, hinge: hinge, hingeReceived: hingeReceived,
-                             maxSize: snapshot.panelMaxSize(), showToolbar: $showToolbar)
+                             maxSize: snapshot.panelMaxSize(), options: $options)
                     .onGeometryChange(for: CGSize.self) { $0.size } action: { panelSize = $0 }
                     .offset(x: panelOrigin.x, y: panelOrigin.y)
             }

@@ -11,7 +11,7 @@ struct ReadoutPanel: View {
     let hingeReceived: Bool
     /// The panel never grows past this; its contents scroll instead.
     let maxSize: CGSize
-    @Binding var showToolbar: Bool
+    @Binding var options: BarOptions
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -32,8 +32,11 @@ struct ReadoutPanel: View {
 
     private var details: some View {
         VStack(alignment: .leading, spacing: 4) {
-            // First, so it stays reachable even when the panel has to scroll.
-            Toggle("Show toolbar", isOn: $showToolbar)
+            // First, so they stay reachable even when the panel has to scroll.
+            Toggle("Toolbar", isOn: $options.toolbar)
+            Toggle("Nav title", isOn: $options.title)
+            Toggle("Tab bar", isOn: $options.tabBar)
+            Toggle("Force nav bar", isOn: $options.forceNavigationBar)
 
             Divider()
 
