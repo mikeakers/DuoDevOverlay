@@ -10,7 +10,7 @@ import SwiftUI
 
 extension RegionInfo {
     init(_ region: ReservedRegion) {
-        self.init(id: String(describing: region.id),
+        self.init(id: region.id,
                   kind: region.kind == .division ? .division : .occlusion,
                   frame: region.frame,
                   margins: region.margins,
@@ -28,6 +28,11 @@ extension RegionSnapshot {
         }
         self.init(size: proxy.size, safeArea: proxy.safeAreaInsets, regions: regions.map { RegionInfo($0) })
     }
+
+    init(_ proxy: GeometryProxy, safeArea: EdgeInsets) {
+        self.init(proxy)
+        self.safeArea = safeArea
+    }
 }
 
 struct RegionCanvas: View {
@@ -38,8 +43,9 @@ struct RegionCanvas: View {
     @State private var panelSize: CGSize = .zero
 
     var body: some View {
+        GeometryReader { safeProxy in
         GeometryReader { proxy in
-            let snapshot = RegionSnapshot(proxy)
+            let snapshot = RegionSnapshot(proxy, safeArea: safeProxy.safeAreaInsets)
             let panelOrigin = snapshot.panelOrigin(for: panelSize)
 
             ZStack(alignment: .topLeading) {
@@ -62,6 +68,7 @@ struct RegionCanvas: View {
             .animation(.snappy, value: panelOrigin)
         }
         .ignoresSafeArea()
+        }
         .onHingeChange { _, newContext in
             hingeReceived = true
             hinge = newContext.hinge.map { HingeInfo(status: $0.status, degrees: $0.angle.degrees) }

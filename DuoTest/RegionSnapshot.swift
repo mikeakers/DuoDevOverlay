@@ -17,7 +17,10 @@ enum RegionKind: String {
 /// A reserved region copied out of `ReservedRegion` (which has no public
 /// initializer) so it can be built in tests.
 struct RegionInfo: Identifiable, Equatable {
-    var id: String
+    /// The system's `ReservedRegion.ID` in the app; any hashable value in tests.
+    /// (`ReservedRegion.ID` describes itself as just "ID()", so it can't be
+    /// stringified.)
+    var id: AnyHashable
     var kind: RegionKind
     /// Includes `margins`, per Apple's reference.
     var frame: CGRect
