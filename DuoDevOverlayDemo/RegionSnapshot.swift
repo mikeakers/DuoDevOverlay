@@ -1,6 +1,6 @@
 //
 //  RegionSnapshot.swift
-//  DuoTest
+//  DuoDevOverlayDemo
 //
 //  Plain values describing everything the visualizer draws, plus the pure
 //  geometry and formatting it needs. No views live here.

@@ -1,6 +1,6 @@
 //
 //  ContentView.swift
-//  DuoTest
+//  DuoDevOverlayDemo
 //
 //  Created by Mike Akers on 11/2/26.
 //

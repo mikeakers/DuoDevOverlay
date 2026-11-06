@@ -1,6 +1,6 @@
 //
 //  RegionCanvas.swift
-//  DuoTest
+//  DuoDevOverlayDemo
 //
 //  Full-screen view that reads the safe area, reserved regions and hinge,
 //  and draws them.

@@ -1,5 +1,5 @@
-// Renders DuoTest's 1024×1024 app icon (opaque, as the App Store requires).
-// Usage: swift Tools/make-icon.swift DuoTest/Assets.xcassets/AppIcon.appiconset/AppIcon.png
+// Renders DuoDevOverlayDemo's 1024×1024 app icon (opaque, as the App Store requires).
+// Usage: swift Tools/make-icon.swift DuoDevOverlayDemo/Assets.xcassets/AppIcon.appiconset/AppIcon.png
 import CoreGraphics
 import Foundation
 import ImageIO

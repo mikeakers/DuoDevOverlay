@@ -1,6 +1,6 @@
 import Testing
 import SwiftUI
-@testable import DuoTest
+@testable import DuoDevOverlayDemo
 
 @MainActor
 struct RegionInfoTests {

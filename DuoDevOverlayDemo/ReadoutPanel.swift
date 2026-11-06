@@ -1,6 +1,6 @@
 //
 //  ReadoutPanel.swift
-//  DuoTest
+//  DuoDevOverlayDemo
 //
 
 import SwiftUI

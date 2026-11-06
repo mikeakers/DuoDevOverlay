@@ -1,13 +1,13 @@
 //
-//  DuoTestUITests.swift
-//  DuoTestUITests
+//  DuoDevOverlayDemoUITests.swift
+//  DuoDevOverlayDemoUITests
 //
 //  Created by Mike Akers on 11/2/26.
 //
 
 import XCTest
 
-final class DuoTestUITests: XCTestCase {
+final class DuoDevOverlayDemoUITests: XCTestCase {
 
     override func setUpWithError() throws {
         // Put setup code here. This method is called before the invocation of each test method in the class.
