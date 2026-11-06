@@ -1,17 +1,20 @@
 //
 //  ReadoutPanel.swift
-//  DuoTest
+//  DuoDevOverlay
 //
 
 import SwiftUI
 
-struct ReadoutPanel: View {
+/// The numbers: hinge, view size, size classes, insets and every region.
+/// `accessory` is shown first, above a divider.
+@available(iOS 27.1, *)
+struct ReadoutPanel<Accessory: View>: View {
     let snapshot: RegionSnapshot
     let hinge: HingeInfo?
     let hingeReceived: Bool
     /// The panel never grows past this; its contents scroll instead.
     let maxSize: CGSize
-    @Binding var options: BarOptions
+    let accessory: Accessory
 
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @Environment(\.verticalSizeClass) private var verticalSizeClass
@@ -34,12 +37,11 @@ struct ReadoutPanel: View {
 
     private var details: some View {
         VStack(alignment: .leading, spacing: 4) {
-            // First, so they stay reachable even when the panel has to scroll.
-            Toggle("Toolbar", isOn: $options.toolbar)
-            Toggle("Nav title", isOn: $options.title)
-            Toggle("Tab bar", isOn: $options.tabBar)
-
-            Divider()
+            // First, so it stays reachable even when the panel has to scroll.
+            if Accessory.self != EmptyView.self {
+                accessory
+                Divider()
+            }
 
             Text(verbatim: "Hinge  \(Readout.hinge(hinge, received: hingeReceived))")
             Text(verbatim: "View   \(Readout.size(snapshot.size))")

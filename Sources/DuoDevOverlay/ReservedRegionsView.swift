@@ -1,13 +1,14 @@
 //
-//  RegionCanvas.swift
-//  DuoTest
+//  ReservedRegionsView.swift
+//  DuoDevOverlay
 //
-//  Full-screen view that reads the safe area, reserved regions and hinge,
-//  and draws them.
+//  Full-screen, transparent view that reads the safe area, reserved regions
+//  and hinge, and draws them with a draggable readout panel.
 //
 
 import SwiftUI
 
+@available(iOS 27.1, *)
 extension RegionInfo {
     init(_ region: ReservedRegion) {
         self.init(id: region.id,
@@ -18,6 +19,7 @@ extension RegionInfo {
     }
 }
 
+@available(iOS 27.1, *)
 extension RegionSnapshot {
     /// Reads every region of both kinds, active and inactive, in physical
     /// (unmirrored) coordinates of the proxy's view. `safeArea` is passed in
@@ -31,8 +33,14 @@ extension RegionSnapshot {
     }
 }
 
-struct RegionCanvas: View {
-    @Binding var options: BarOptions
+/// Draws the safe-area insets and reserved regions of the screen it covers,
+/// with a readout panel that can be dragged and double-tapped back to its
+/// automatic place. The view is transparent: put it over your content.
+/// `accessory` appears at the top of the readout panel.
+@available(iOS 27.1, *)
+public struct ReservedRegionsView<Accessory: View>: View {
+    private let accessory: Accessory
+    private let onPanelFrameChange: (CGRect) -> Void
 
     @State private var hinge: HingeInfo?
     @State private var hingeReceived = false
@@ -40,13 +48,23 @@ struct RegionCanvas: View {
     @State private var panelPlacement: PanelPlacement = .automatic
     @GestureState private var panelDrag: CGSize = .zero
 
-    var body: some View {
+    public init(@ViewBuilder accessory: () -> Accessory) {
+        self.init(onPanelFrameChange: { _ in }, accessory: accessory)
+    }
+
+    /// `onPanelFrameChange` receives the panel's frame in global coordinates
+    /// whenever it moves or resizes.
+    init(onPanelFrameChange: @escaping (CGRect) -> Void, @ViewBuilder accessory: () -> Accessory) {
+        self.accessory = accessory()
+        self.onPanelFrameChange = onPanelFrameChange
+    }
+
+    public var body: some View {
         GeometryReader { safeProxy in
         GeometryReader { proxy in
             // The outer reader is laid out inside the safe area, so its frame
             // *is* the safe rect; the insets are the gap between it and the
-            // full-screen inner reader. (Its own `safeAreaInsets` describe the
-            // insets around it, so they can't be subtracted from its frame.)
+            // full-screen inner reader.
             let insets = RegionSnapshot.insets(full: proxy.frame(in: .global),
                                                safe: safeProxy.frame(in: .global))
             let snapshot = RegionSnapshot(proxy, safeArea: insets)
@@ -57,21 +75,26 @@ struct RegionCanvas: View {
                 panelSize: panelSize)
 
             ZStack(alignment: .topLeading) {
-                Color(white: 0.9)
+                Color.clear
 
-                ForEach(snapshot.bands) { band in
-                    BandView(band: band)
+                Group {
+                    ForEach(snapshot.bands) { band in
+                        BandView(band: band)
+                    }
+                    ForEach(snapshot.regions) { region in
+                        RegionView(region: region)
+                    }
                 }
-
-                ForEach(snapshot.regions) { region in
-                    RegionView(region: region)
-                }
+                .allowsHitTesting(false)
 
                 ReadoutPanel(snapshot: snapshot, hinge: hinge, hingeReceived: hingeReceived,
-                             maxSize: snapshot.panelMaxSize(), options: $options)
+                             maxSize: snapshot.panelMaxSize(), accessory: accessory)
                     .accessibilityElement(children: .contain)
                     .accessibilityIdentifier("readoutPanel")
                     .onGeometryChange(for: CGSize.self) { $0.size } action: { panelSize = $0 }
+                    // Inside `.offset`, so the global frame includes where the
+                    // panel is drawn. (Read outside it, the frame stays put.)
+                    .onGeometryChange(for: CGRect.self) { $0.frame(in: .global) } action: { onPanelFrameChange($0) }
                     .gesture(
                         DragGesture(minimumDistance: 8, coordinateSpace: .global)
                             .updating($panelDrag) { value, drag, _ in drag = value.translation }
@@ -94,6 +117,13 @@ struct RegionCanvas: View {
             hingeReceived = true
             hinge = newContext.hinge.map { HingeInfo(status: $0.status, degrees: $0.angle.degrees) }
         }
+    }
+}
+
+@available(iOS 27.1, *)
+extension ReservedRegionsView where Accessory == EmptyView {
+    public init() {
+        self.init { EmptyView() }
     }
 }
 

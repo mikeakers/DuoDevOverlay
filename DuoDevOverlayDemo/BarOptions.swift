@@ -1,6 +1,6 @@
 //
 //  BarOptions.swift
-//  DuoTest
+//  DuoDevOverlayDemo
 //
 //  Which system bars the visualizer shows, so their effect on the safe area
 //  can be compared live.

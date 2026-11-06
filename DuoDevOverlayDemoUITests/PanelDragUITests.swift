@@ -1,6 +1,6 @@
 //
 //  PanelDragUITests.swift
-//  DuoTestUITests
+//  DuoDevOverlayDemoUITests
 //
 //  Drives the readout panel's drag and double-tap with real touches.
 //

@@ -1,10 +1,11 @@
 //
 //  ContentView.swift
-//  DuoTest
+//  DuoDevOverlayDemo
 //
 //  Created by Mike Akers on 11/2/26.
 //
 
+import DuoDevOverlay
 import SwiftUI
 
 struct ContentView: View {
@@ -34,7 +35,8 @@ private struct RegionTab: View {
 
     var body: some View {
         NavigationStack {
-            RegionCanvas(options: $options)
+            ReservedRegionsView { BarSwitches(options: $options) }
+                .background(Color(white: 0.9).ignoresSafeArea())
                 .navigationTitle(options.title ? "Regions" : "")
                 .toolbar(options.navigationBarVisibility, for: .navigationBar)
                 .toolbar(options.tabBarVisibility, for: .tabBar)

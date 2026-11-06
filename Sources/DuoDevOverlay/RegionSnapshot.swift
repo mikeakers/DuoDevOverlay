@@ -1,6 +1,6 @@
 //
 //  RegionSnapshot.swift
-//  DuoTest
+//  DuoDevOverlay
 //
 //  Plain values describing everything the visualizer draws, plus the pure
 //  geometry and formatting it needs. No views live here.
@@ -42,6 +42,7 @@ struct RegionInfo: Identifiable, Equatable {
     }
 }
 
+@available(iOS 27.1, *)
 struct HingeInfo: Equatable {
     var status: DeviceHinge.Status
     var degrees: Double
@@ -242,6 +243,7 @@ enum Readout {
         }
     }
 
+    @available(iOS 27.1, *)
     static func hinge(_ hinge: HingeInfo?, received: Bool) -> String {
         guard received else { return "waiting for update" }
         guard let hinge else { return "no hinge" }

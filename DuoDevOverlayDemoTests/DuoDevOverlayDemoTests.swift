@@ -1,14 +1,14 @@
 //
-//  DuoTestTests.swift
-//  DuoTestTests
+//  DuoDevOverlayDemoTests.swift
+//  DuoDevOverlayDemoTests
 //
 //  Created by Mike Akers on 11/2/26.
 //
 
 import Testing
-@testable import DuoTest
+@testable import DuoDevOverlayDemo
 
-struct DuoTestTests {
+struct DuoDevOverlayDemoTests {
 
     @Test func example() async throws {
         // Write your test here and use APIs like `#expect(...)` to check expected conditions.
