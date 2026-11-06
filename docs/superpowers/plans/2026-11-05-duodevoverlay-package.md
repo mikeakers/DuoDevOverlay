@@ -46,6 +46,7 @@
 | Package tests | `DuoDevOverlayTests` |
 
 - The local folder `~/repos/DuoTest` is **not** renamed by this plan.
+- Simulator folding, rotation and inner-screen taps: the `duoctl` skill (`~/.claude/skills/duoctl/scripts/duoctl`). Don't use other tap tools; they miss the inner screen.
 - Commits end with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.
 
 ## Project-format notes (verified 2026-11-05 on a scratch copy)
@@ -63,7 +64,7 @@ These were found by experiment, using `xcprojformatter` (which rejects or drops 
 ## Review Focus
 
 1. **Touches through the overlay.** A tap anywhere outside the panel must reach the host app: table rows, bar buttons, and the keyboard.
-   - Covered by `OverlayWindowTests` and `OverlayPassThroughUITests.testTapOutsidePanelReachesApp`.
+   - Covered by `OverlayWindowTests` and `OverlayPassThroughUITests.testTapOutsidePanelReachesApp`, and on both screens with the keyboard by Task 5, Steps 4–5 (duoctl).
 2. **Above modals.** The overlay must stay above modals presented by the host app.
    - Covered by `OverlayPassThroughUITests.testOverlayStaysAboveModal`.
 3. **Install and uninstall.** Calling `install` twice must not add a second window. `uninstall` followed by `install` must bring the overlay back.
@@ -1163,6 +1164,9 @@ final class RowsViewController: UITableViewController {
         navigationItem.leftBarButtonItem = UIBarButtonItem(
             title: "Modal",
             primaryAction: UIAction { [weak self] _ in self?.presentModal() })
+        // A text field, to check the keyboard still comes up with the overlay installed.
+        navigationItem.searchController = UISearchController()
+        navigationItem.hidesSearchBarWhenScrolling = false
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -1302,26 +1306,115 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"
 
 ---
 
-### Task 5: Check on the iPhone Duo (the user drives)
+### Task 5: Check folding, rotation and touches on the simulator with duoctl, then on the Duo
 
-This task has no code. It covers the spec's on-device checks and its first risk, which the simulator can't settle.
+This task has no code. It covers the spec's on-device checks and its first risk: whether regions and hinge updates report correctly from a secondary, non-key window. Most of it runs on the iPhone Duo simulator through the `duoctl` skill, which can fold, rotate, tap and take screenshots. The physical Duo is a final pass at the end.
 
-- [ ] **Step 1: Install and launch the UIKit demo on the Duo**
+**Interfaces:**
+- Consumes: both demo apps from Tasks 2–4; the panel's text (`Hinge …`, `View …`, `Safe …` and each region's `frame` / `margins` lines); the `Hide overlay` button; and the UIKit demo's rows, search field, `Overlay` and `Modal` buttons.
+- Produces: screenshots and notes in the plan workspace (`<workspace>/sim/`), and one ledger line per check.
 
-Build for the device, then install it with `xcrun devicectl device install app` and launch it with `xcrun devicectl device process launch --terminate-existing com.runway30.DuoDevOverlayUIKitDemo`. This works over Wi-Fi.
+Notes on `duoctl` (read the skill before starting):
+- Run it as `DUOCTL=~/.claude/skills/duoctl/scripts/duoctl`.
+- It acts on the only booted iPhone Duo, so boot only `24D777C6-5C3A-4D1C-B22A-D3326828DC88`.
+- Every command prints `state` (JSON: `hingeAngle`, `activeScreen`, `orientation`, `sizePoints`). Read it rather than assuming.
+- Taps use the active screen's interface points. Use `duoctl tap` for every touch: other tools miss the inner screen.
+- **Verify every tap with a screenshot.** A tap reporting success proves nothing.
+- On the 27.2 runtime, angles between closed and open land within a few degrees, so compare `hingeAngle` within ±5°.
+- `duoctl elements` and `tap --label` need the AXe CLI, which isn't installed. Coordinate taps and screenshots don't need it, so this task is written around screenshots. If the user installs AXe (`brew install cameroncooke/axe/axe`), use `elements` to read the panel text exactly instead of reading it from images.
+- If a command succeeds but `state` doesn't change, stop: duoctl's private interfaces have probably changed. Record that and tell the user. Don't retry in a loop.
 
-- [ ] **Step 2: The user checks, and screenshots are taken on request**
+- [ ] **Step 1: Build both apps for the simulator and install them**
 
-1. **Regions.** The overlay window shows the fold and the occlusion regions, with the same frames as the SwiftUI demo in the same pose. This settles the risk about regions in a secondary window.
-2. **Hinge.** The hinge line updates while folding, so `onHingeChange` works in a non-key window.
-3. **Following the app.** The overlay follows rotation and folding together with the app.
-4. **Status bar.** Its style matches the app's, and the overlay doesn't take it over.
-5. **Keyboard.** It still appears for the app, so the overlay never becomes key.
-6. **Touches.** Rows, bar buttons, tabs and the modal all respond through the overlay.
+```bash
+export DEVELOPER_DIR=/Applications/Xcode-27.2.0.app/Contents/Developer
+SIM=24D777C6-5C3A-4D1C-B22A-D3326828DC88
+DUOCTL=~/.claude/skills/duoctl/scripts/duoctl
+OUT="$(git rev-parse --show-toplevel)/.superpowers/sdd/2026-11-05-duodevoverlay-package/sim"; mkdir -p "$OUT"
+xcrun simctl boot $SIM 2>/dev/null; xcrun simctl bootstatus $SIM -b > /dev/null
+for s in DuoDevOverlayDemo DuoDevOverlayUIKitDemo; do
+  xcodebuild -project DuoDevOverlayDemo.xcodeproj -scheme $s -configuration Debug \
+    -destination "platform=iOS Simulator,id=$SIM" -derivedDataPath /tmp/dd-sim build > /tmp/sim-$s.log 2>&1; echo "$s build=$?"
+  xcrun simctl install $SIM /tmp/dd-sim/Build/Products/Debug-iphonesimulator/$s.app
+done
+$DUOCTL state
+```
+Expected: `build=0` for both apps, and a `state` JSON with a `hingeAngle` and an `activeScreen`.
 
-Report the results to the user check by check. Any failure goes into the ledger and gets a debugging pass (superpowers:systematic-debugging) before finishing.
+- [ ] **Step 2: Region frames match between the two apps in every pose**
 
-- [ ] **Step 3: Remind the user**
+The same poses are run for each app. Launch the app, set the pose, wait for animations, and take a screenshot:
 
-- Delete the old DuoTest app from the Duo.
+```bash
+pose() {  # pose <app-bundle-id> <name> <duoctl args...>
+  local app=$1 name=$2; shift 2
+  $DUOCTL "$@" > "$OUT/$name-state.json"
+  sleep 1.5
+  $DUOCTL screenshot "$OUT/$name.png" > /dev/null
+  cat "$OUT/$name-state.json"
+}
+for app in com.runway30.DuoDevOverlayDemo com.runway30.DuoDevOverlayUIKitDemo; do
+  short=${app##*.}
+  xcrun simctl launch --terminate-running-process $SIM $app > /dev/null; sleep 2
+  pose $app $short-closed-portrait   close
+  $DUOCTL rotate portrait > /dev/null
+  pose $app $short-half              half
+  pose $app $short-open              open
+  pose $app $short-open-portrait     rotate portrait
+  $DUOCTL rotate landscape > /dev/null
+done
+```
+
+Compare each pose's two screenshots, the SwiftUI demo against the UIKit demo:
+- **Fold.** The fold band (orange) is in the same place, with the same width and active/inactive state.
+- **Occluded areas.** The camera and status-block regions (pink) are the same.
+- **Panel numbers.** The `Safe …` line and every region's `frame` and `margins` line match. One difference is expected: the SwiftUI demo's switches are off, so it has no bars, while the UIKit demo has a navigation bar and a tab bar. Bars don't change regions, and the overlay window shouldn't see the UIKit app's bar insets at all. If the UIKit demo's `Safe` values include bar insets, that is a finding.
+- **Half-folded.** In the `half` pose the fold must be **active** in both apps.
+
+Expected: the regions and region numbers are identical in every pose. Record one ledger line per pose. Any mismatch settles the spec's first risk against us. Debug it with superpowers:systematic-debugging before going on.
+
+- [ ] **Step 3: The hinge readout follows the fold in the overlay window**
+
+```bash
+xcrun simctl launch --terminate-running-process $SIM com.runway30.DuoDevOverlayUIKitDemo > /dev/null; sleep 2
+for angle in 180 120 60; do pose x uikit-hinge-$angle hinge $angle; done
+```
+Expected: each screenshot's `Hinge` line shows the angle `state` reported (within ±5°), with status `fully open` at 180 and `partially open` at 120 and 60. It must not stay on `waiting for update`. That would mean `onHingeChange` doesn't reach a non-key window.
+
+- [ ] **Step 4: Touches reach the app through the overlay, on both screens**
+
+Run this twice: once after `$DUOCTL close` (outer screen) and once after `$DUOCTL open` (inner screen). Each time:
+
+1. Launch the UIKit demo and take a screenshot. Pick a row whose centre is outside the panel, using coordinates read from the screenshot. Screenshot pixels ÷ screen scale = points, and `state.sizePoints` gives the point size to scale against.
+2. `$DUOCTL tap <x> <y>` on that row, then take a screenshot. Expected: the row's detail screen ("Row N" in the navigation bar).
+3. Tap the back button area, then the **Modal** bar button, then take a screenshot. Expected: the modal shows, **and** the overlay panel is still drawn on top of it.
+4. Tap the panel's **Hide overlay** button, then take a screenshot. Expected: the panel and bands are gone, and the modal is still open.
+5. Dismiss the modal (Done), tap **Overlay**, then take a screenshot. Expected: the overlay is back.
+6. Tap the second tab, then take a screenshot. Expected: the "More" tab is showing.
+
+Expected: every step's screenshot shows the change. Record a ledger line for each screen.
+
+- [ ] **Step 5: Keyboard and status bar**
+
+With the overlay installed, open the UIKit demo and tap its search field, then take a screenshot.
+- Expected: the keyboard appears and typing goes to the field (`$DUOCTL tap` on a key, then a screenshot shows the letter). That shows the overlay window never became key.
+- Expected: in every screenshot from Steps 2–5, the status bar matches the app's own appearance with the overlay installed and with it hidden. Compare `uikit-closed-portrait.png` with a screenshot taken after **Hide overlay**.
+
+- [ ] **Step 6: Report the simulator results**
+
+Before touching the device, tell the user the result of each check (Steps 2–5), with the screenshot paths. Include a ledger line `Task 5: simulator checks — <n>/<n> passed`. Any failure is debugged before Step 7.
+
+- [ ] **Step 7: Final pass on the physical Duo (the user drives)**
+
+1. Build for the device, install with `xcrun devicectl device install app`, and launch with `xcrun devicectl device process launch --terminate-existing com.runway30.DuoDevOverlayUIKitDemo`. This works over Wi-Fi.
+2. The user checks the things a simulator might not show truthfully:
+   - The real camera and status-block occlusion frames.
+   - Fold, hinge and rotation behaviour while the device is actually folded by hand.
+   - Status bar and keyboard behaviour.
+   Screenshots are taken with `xcrun devicectl device capture screenshot` on request.
+3. Record the user's results in the ledger.
+
+- [ ] **Step 8: Remind the user**
+
+- Delete the old DuoTest app from the Duo, and from the simulator with `xcrun simctl uninstall 24D777C6-5C3A-4D1C-B22A-D3326828DC88 com.runway30.DuoTest`.
 - After merging, rename `~/repos/DuoTest` to `~/repos/DuoDevOverlay`.
