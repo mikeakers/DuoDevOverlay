@@ -5,6 +5,8 @@ and the reserved regions — the fold (orange) and the cameras and status block
 (pink) — over your running app, with a draggable panel of the exact numbers.
 It updates live as the device folds and rotates.
 
+https://github.com/user-attachments/assets/a9c28701-9c18-498a-865d-e23539e43386
+
 ## Add it
 
 In Xcode: **File ▸ Add Package Dependencies…**, enter
