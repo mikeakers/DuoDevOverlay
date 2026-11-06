@@ -21,7 +21,7 @@ Success:
 ## Decisions made in conversation
 
 - **Distribution.** A Swift package in this repo, which is renamed to
-  `mikeakers/DuoDevOverlay` (still private) and added by URL.
+  `mikeakers/DuoDevOverlay` (public) and added by URL.
 - **Naming.** Everything is renamed away from "DuoTest". See Renaming below.
 - **Host app.** The host app's root is UIKit, so the overlay goes in its own
   pass-through `UIWindow` on the host's `UIWindowScene`. Adding a subview to

@@ -11,8 +11,7 @@ https://github.com/user-attachments/assets/a9c28701-9c18-498a-865d-e23539e43386
 
 In Xcode: **File ▸ Add Package Dependencies…**, enter
 `https://github.com/mikeakers/DuoDevOverlay`, and add the `DuoDevOverlay`
-library to your app target. (The repo is private: your Xcode account, and any
-CI that builds the app, need access to it.)
+library to your app target.
 
 ## Turn it on
 

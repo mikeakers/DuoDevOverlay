@@ -1233,8 +1233,7 @@ It updates live as the device folds and rotates.
 
 In Xcode: **File ▸ Add Package Dependencies…**, enter
 `https://github.com/mikeakers/DuoDevOverlay`, and add the `DuoDevOverlay`
-library to your app target. (The repo is private: your Xcode account, and any
-CI that builds the app, need access to it.)
+library to your app target.
 
 ## Turn it on
 
