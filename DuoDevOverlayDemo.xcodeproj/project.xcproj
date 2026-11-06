@@ -10,6 +10,9 @@
       "Base",
     ],
   },
+  "packages": [
+    { "kind": "local", "path": "." },
+  ],
   "files": [
     { "kind": "folder", "path": "DuoDevOverlayDemo", "target-membership": [ "DuoDevOverlayDemo" ] },
     { "kind": "folder", "path": "DuoDevOverlayDemoTests", "target-membership": [ "DuoDevOverlayDemoTests" ] },
@@ -30,6 +33,9 @@
       "id": "271F66D9309972FD0045FD4D",
       "product": "Products/DuoDevOverlayDemo.app",
       "product-type": "application",
+      "package-product-members": [
+        { "package": ".", "product-name": "DuoDevOverlay", "build-phase": { "build-phase": "frameworks" } },
+      ],
       "build-phases": [
         "compile-sources",
         "frameworks",

@@ -1,6 +1,6 @@
 import Testing
 import SwiftUI
-@testable import DuoDevOverlayDemo
+@testable import DuoDevOverlay
 
 @MainActor
 struct RegionInfoTests {
@@ -165,6 +165,7 @@ struct ReadoutTests {
         #expect(Readout.sizeClass(nil) == "–")
     }
 
+    @available(iOS 27.1, *)
     @Test func hingeReadoutDistinguishesWaitingFromNoHinge() {
         #expect(Readout.hinge(nil, received: false) == "waiting for update")
         #expect(Readout.hinge(nil, received: true) == "no hinge")
@@ -172,6 +173,7 @@ struct ReadoutTests {
         #expect(Readout.hinge(hinge, received: true) == "partially open 92°")
     }
 
+    @available(iOS 27.1, *)
     @Test func hingeStatusNames() {
         #expect(HingeInfo(status: .closed, degrees: 0).statusName == "closed")
         #expect(HingeInfo(status: .fullyOpen, degrees: 180).statusName == "fully open")
