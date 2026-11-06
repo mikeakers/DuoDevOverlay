@@ -6,6 +6,7 @@
 //  lets every touch outside the readout panel through to the app.
 //
 
+import ObjectiveC
 import SwiftUI
 import UIKit
 
@@ -14,9 +15,30 @@ final class OverlayWindow: UIWindow {
     /// outside it go to the windows below. `.null` until the panel is laid out.
     var panelFrame: CGRect = .null
 
+    /// Never key, even when UIKit picks a new key window after another one
+    /// hides, so the app keeps the keyboard and its `keyWindow` presentations
+    /// never land in this mostly untouchable window.
+    override var canBecomeKey: Bool { false }
+
     override func hitTest(_ point: CGPoint, with event: UIEvent?) -> UIView? {
         guard panelFrame.contains(point) else { return nil }
         return super.hitTest(point, with: event)
+    }
+}
+
+/// Each scene's overlay window, attached to the scene itself. The window
+/// lives exactly as long as its scene, so a disconnected scene can't leak it,
+/// and a new scene at a reused address can't inherit it. (The window refers
+/// back to its scene only weakly, so there's no cycle.)
+enum OverlayStore {
+    private static var key: UInt8 = 0
+
+    static func window(for owner: AnyObject) -> UIWindow? {
+        objc_getAssociatedObject(owner, &key) as? UIWindow
+    }
+
+    static func setWindow(_ window: UIWindow?, for owner: AnyObject) {
+        objc_setAssociatedObject(owner, &key, window, .OBJC_ASSOCIATION_RETAIN_NONATOMIC)
     }
 }
 

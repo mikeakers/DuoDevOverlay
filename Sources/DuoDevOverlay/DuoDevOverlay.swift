@@ -24,14 +24,11 @@ import UIKit
 /// navigation and tab bars add inside your view controllers don't appear.
 @MainActor
 public enum DuoDevOverlay {
-    private static var windows: [ObjectIdentifier: UIWindow] = [:]
-
     /// Adds the overlay to `scene`. Does nothing if `scene` already has it,
     /// or below iOS 27.1, where the reserved-region APIs don't exist.
     public static func install(in scene: UIWindowScene) {
         guard #available(iOS 27.1, *) else { return }
-        let key = ObjectIdentifier(scene)
-        guard windows[key] == nil else { return }
+        guard OverlayStore.window(for: scene) == nil else { return }
 
         let window = OverlayWindow(windowScene: scene)
         window.windowLevel = .normal + 1
@@ -50,18 +47,19 @@ public enum DuoDevOverlay {
 
         // Shown but never made key, so the app keeps the keyboard and focus.
         window.isHidden = false
-        windows[key] = window
+        OverlayStore.setWindow(window, for: scene)
     }
 
     /// Removes the overlay from `scene`, if it has one.
     public static func uninstall(from scene: UIWindowScene) {
-        guard let window = windows.removeValue(forKey: ObjectIdentifier(scene)) else { return }
+        guard let window = OverlayStore.window(for: scene) else { return }
+        OverlayStore.setWindow(nil, for: scene)
         window.isHidden = true
         window.rootViewController = nil
     }
 
     /// Whether `scene` currently has the overlay.
     public static func isInstalled(in scene: UIWindowScene) -> Bool {
-        windows[ObjectIdentifier(scene)] != nil
+        OverlayStore.window(for: scene) != nil
     }
 }

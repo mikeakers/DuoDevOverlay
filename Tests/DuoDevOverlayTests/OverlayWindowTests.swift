@@ -21,6 +21,12 @@ struct OverlayWindowTests {
         #expect(window.hitTest(CGPoint(x: 100, y: 100), with: nil) != nil)
     }
 
+    @Test func overlayCanNeverBecomeTheKeyWindow() {
+        // If it did, an app presenting on its key window's root would put a
+        // modal in a window that ignores touches outside the panel.
+        #expect(OverlayWindow(frame: .zero).canBecomeKey == false)
+    }
+
     @Test func beforeThePanelIsLaidOutEveryTouchPassesThrough() {
         let window = makeWindow(panel: .null)
         #expect(window.hitTest(CGPoint(x: 100, y: 100), with: nil) == nil)
