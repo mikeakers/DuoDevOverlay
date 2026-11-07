@@ -35,6 +35,20 @@ whether it's there — handy for a debug-menu switch. The panel's
 **Hide overlay** button uninstalls it too. Drag the panel anywhere; double-tap
 it to send it back to its automatic corner.
 
+To keep a switch in step, including when someone taps **Hide overlay**,
+observe `DuoDevOverlay.didChangeNotification`. It's posted on every install
+and uninstall, with the scene as its `object`:
+
+```swift
+NotificationCenter.default.addObserver(
+    self, selector: #selector(overlayDidChange),
+    name: DuoDevOverlay.didChangeNotification, object: windowScene)
+
+@objc func overlayDidChange() {
+    overlaySwitch.isOn = DuoDevOverlay.isInstalled(in: windowScene)
+}
+```
+
 Callable from iOS 17; it does nothing below iOS 27.1, where the reserved-region
 APIs don't exist.
 

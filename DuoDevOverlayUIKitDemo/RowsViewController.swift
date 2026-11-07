@@ -7,6 +7,7 @@
 //
 
 import DuoDevOverlay
+import Foundation
 import UIKit
 
 final class RowsViewController: UITableViewController {
@@ -35,6 +36,22 @@ final class RowsViewController: UITableViewController {
         // A text field, to check the keyboard still comes up with the overlay installed.
         navigationItem.searchController = UISearchController()
         navigationItem.hidesSearchBarWhenScrolling = false
+
+        // The panel's Hide overlay button removes the overlay without going
+        // through this controller, so listen for every change.
+        NotificationCenter.default.addObserver(
+            self, selector: #selector(overlayDidChange),
+            name: DuoDevOverlay.didChangeNotification, object: nil)
+    }
+
+    @objc private func overlayDidChange(_ notification: Notification) {
+        guard notification.object as? UIWindowScene === view.window?.windowScene else { return }
+        updateOverlayButton()
+    }
+
+    override func viewIsAppearing(_ animated: Bool) {
+        super.viewIsAppearing(animated)
+        updateOverlayButton()
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
@@ -64,6 +81,15 @@ final class RowsViewController: UITableViewController {
         } else {
             DuoDevOverlay.install(in: scene)
         }
+    }
+
+    /// Shows whether the overlay is on, the way a debug-menu switch would.
+    private func updateOverlayButton() {
+        guard let item = navigationItem.rightBarButtonItem,
+              let scene = view.window?.windowScene else { return }
+        let installed = DuoDevOverlay.isInstalled(in: scene)
+        item.isSelected = installed
+        item.accessibilityValue = installed ? "On" : "Off"
     }
 
     private func presentModal() {

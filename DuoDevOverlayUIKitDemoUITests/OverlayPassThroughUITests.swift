@@ -57,6 +57,23 @@ final class OverlayPassThroughUITests: XCTestCase {
         XCTAssertTrue(panel.waitForExistence(timeout: 5), "the Overlay button should reinstall it")
     }
 
+    /// Issue #2: a host control showing the overlay's state must follow the
+    /// panel's own Hide overlay button, so a single tap brings the overlay back.
+    @MainActor
+    func testHostButtonFollowsHideOverlay() {
+        let overlayButton = app.buttons["Overlay"].firstMatch
+        XCTAssertEqual(overlayButton.value as? String, "On")
+
+        app.buttons["Hide overlay"].tap()
+        XCTAssertTrue(panel.waitForNonExistence(timeout: 5))
+        XCTAssertEqual(overlayButton.value as? String, "Off",
+                       "the host's button should hear that the panel uninstalled the overlay")
+
+        overlayButton.tap()
+        XCTAssertTrue(panel.waitForExistence(timeout: 5), "one tap should bring the overlay back")
+        XCTAssertEqual(overlayButton.value as? String, "On")
+    }
+
     @MainActor
     func testOverlayStaysAboveModal() {
         app.buttons["Modal"].firstMatch.tap()

@@ -5,6 +5,7 @@
 //  Public entry point: put the overlay on a scene, or take it off.
 //
 
+import Foundation
 import SwiftUI
 import UIKit
 
@@ -24,8 +25,21 @@ import UIKit
 /// navigation and tab bars add inside your view controllers don't appear.
 @MainActor
 public enum DuoDevOverlay {
-    /// Adds the overlay to `scene`. Does nothing if `scene` already has it,
-    /// or below iOS 27.1, where the reserved-region APIs don't exist.
+    /// Posted on the main thread whenever the overlay is added to or removed
+    /// from a scene, including when the panel's **Hide overlay** button
+    /// removes it. The notification's `object` is the `UIWindowScene`; read
+    /// ``isInstalled(in:)`` for the new state.
+    ///
+    /// ```swift
+    /// NotificationCenter.default.addObserver(
+    ///     self, selector: #selector(overlayDidChange),
+    ///     name: DuoDevOverlay.didChangeNotification, object: windowScene)
+    /// ```
+    nonisolated public static let didChangeNotification = Notification.Name("DuoDevOverlayDidChange")
+
+    /// Adds the overlay to `scene` and posts ``didChangeNotification``. Does
+    /// nothing if `scene` already has it, or below iOS 27.1, where the
+    /// reserved-region APIs don't exist.
     public static func install(in scene: UIWindowScene) {
         guard #available(iOS 27.1, *) else { return }
         guard OverlayStore.window(for: scene) == nil else { return }
@@ -48,18 +62,25 @@ public enum DuoDevOverlay {
         // Shown but never made key, so the app keeps the keyboard and focus.
         window.isHidden = false
         OverlayStore.setWindow(window, for: scene)
+        postDidChange(for: scene)
     }
 
-    /// Removes the overlay from `scene`, if it has one.
+    /// Removes the overlay from `scene`, if it has one, and posts
+    /// ``didChangeNotification``.
     public static func uninstall(from scene: UIWindowScene) {
         guard let window = OverlayStore.window(for: scene) else { return }
         OverlayStore.setWindow(nil, for: scene)
         window.isHidden = true
         window.rootViewController = nil
+        postDidChange(for: scene)
     }
 
     /// Whether `scene` currently has the overlay.
     public static func isInstalled(in scene: UIWindowScene) -> Bool {
         OverlayStore.window(for: scene) != nil
+    }
+
+    private static func postDidChange(for scene: UIWindowScene) {
+        NotificationCenter.default.post(name: didChangeNotification, object: scene)
     }
 }
