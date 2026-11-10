@@ -165,6 +165,7 @@ struct ReadoutTests {
         #expect(Readout.sizeClass(nil) == "–")
     }
 
+    #if compiler(>=6.4.1)
     @available(iOS 27.1, *)
     @Test func hingeReadoutDistinguishesWaitingFromNoHinge() {
         #expect(Readout.hinge(nil, received: false) == "waiting for update")
@@ -178,6 +179,7 @@ struct ReadoutTests {
         #expect(HingeInfo(status: .closed, degrees: 0).statusName == "closed")
         #expect(HingeInfo(status: .fullyOpen, degrees: 180).statusName == "fully open")
     }
+    #endif
 }
 
 @MainActor

@@ -39,8 +39,12 @@ public enum DuoDevOverlay {
 
     /// Adds the overlay to `scene` and posts ``didChangeNotification``. Does
     /// nothing if `scene` already has it, or below iOS 27.1, where the
-    /// reserved-region APIs don't exist.
+    /// reserved-region APIs don't exist. Built with a toolchain older than
+    /// Xcode 27.1 (which lacks those APIs), it always does nothing, so apps
+    /// can link the package unconditionally.
     public static func install(in scene: UIWindowScene) {
+        // Swift 6.4.1 (Xcode 27.1) is the first toolchain with the iOS 27.1 SDK.
+        #if compiler(>=6.4.1)
         guard #available(iOS 27.1, *) else { return }
         guard OverlayStore.window(for: scene) == nil else { return }
 
@@ -63,6 +67,7 @@ public enum DuoDevOverlay {
         window.isHidden = false
         OverlayStore.setWindow(window, for: scene)
         postDidChange(for: scene)
+        #endif
     }
 
     /// Removes the overlay from `scene`, if it has one, and posts

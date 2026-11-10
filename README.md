@@ -50,7 +50,8 @@ NotificationCenter.default.addObserver(
 ```
 
 Callable from iOS 17; it does nothing below iOS 27.1, where the reserved-region
-APIs don't exist.
+APIs don't exist. It builds with Xcode 27.0 too, but the overlay needs the
+iOS 27.1 SDK: built with Xcode 27.0, `install(in:)` does nothing.
 
 ## What it can and can't see
 

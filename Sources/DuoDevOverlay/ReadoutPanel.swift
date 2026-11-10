@@ -5,6 +5,9 @@
 
 import SwiftUI
 
+// Swift 6.4.1 (Xcode 27.1) is the first toolchain with the iOS 27.1 SDK.
+#if compiler(>=6.4.1)
+
 /// The numbers: hinge, view size, size classes, insets and every region.
 /// `accessory` is shown first, above a divider.
 @available(iOS 27.1, *)
@@ -64,3 +67,5 @@ struct ReadoutPanel<Accessory: View>: View {
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
+
+#endif

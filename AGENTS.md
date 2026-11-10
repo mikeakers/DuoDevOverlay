@@ -28,7 +28,7 @@ docs/superpowers/                design specs and implementation plans (history;
 
 ## Toolchain
 
-- Use Xcode 27.2 explicitly:
+- Use Xcode 27.2 explicitly, even if `xcode-select` points at another Xcode:
   `export DEVELOPER_DIR=/Applications/Xcode-27.2.0.app/Contents/Developer`.
   - Don't change `xcode-select`.
   - Without `DEVELOPER_DIR`, `xcrun simctl` may not be found.
@@ -52,6 +52,10 @@ for f in Package.swift Sources Tests; do ln -sfn "$PWD/$f" "$P/$f"; done
 
 # The package must also build for its iOS 17 minimum (this catches missing @available).
 (cd $P && xcodebuild -scheme DuoDevOverlay -destination 'generic/platform=iOS Simulator' build)
+
+# The package must also build with Xcode 27.0, if it's installed (this catches 27.1 types outside `#if compiler(>=6.4.1)`).
+(cd $P && DEVELOPER_DIR=/Applications/Xcode-27.0.0.app/Contents/Developer \
+  xcodebuild -scheme DuoDevOverlay -destination 'generic/platform=iOS Simulator' -derivedDataPath /tmp/duodevoverlay-dd-27.0 build)
 
 # Demo apps (unit + UI tests)
 xcodebuild -project DuoDevOverlayDemo.xcodeproj -scheme DuoDevOverlayDemo -destination "$D" test
@@ -86,6 +90,7 @@ Bundle IDs:
 
 - **Main actor by default.** Everything is `MainActor` unless you say otherwise: the package sets `.defaultIsolation(MainActor.self)`, and the apps set `SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor`. `MemberImportVisibility` is on, so import every module whose members you use.
 - **iOS 17 vs 27.1.** The package declares iOS 17, but the reserved-region and hinge APIs need iOS 27.1. Mark anything that touches `ReservedRegion`, `DeviceHinge`, `reservedRegions(…)` or `onHingeChange` with `@available(iOS 27.1, *)`. The public entry points stay callable from 17: `install` returns early below 27.1.
+- **Xcode 27.0 compatibility.** `@available` is checked at runtime, but the iOS 27.0 SDK (Xcode 27.0, Swift 6.4) doesn't have the iOS 27.1 types at all. So everything that touches them also sits inside `#if compiler(>=6.4.1)`; Swift 6.4.1 (Xcode 27.1) is the first toolchain with the iOS 27.1 SDK. Leave the public entry points (`install`, `uninstall`, `isInstalled`, `didChangeNotification`) outside the `#if`, so apps can link the package unconditionally. On older toolchains, `install` does nothing. `ReservedRegionsView` only exists on 27.1+ toolchains.
 - **Availability in tests.** Swift Testing rejects `@available` on a suite type. Put it on individual `@Test` functions instead.
 - **Reserved-region API facts.**
   - `ReservedRegion` has no public initializer, so tests build `RegionInfo` directly.

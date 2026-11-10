@@ -42,6 +42,8 @@ struct RegionInfo: Identifiable, Equatable {
     }
 }
 
+// Swift 6.4.1 (Xcode 27.1) is the first toolchain with the iOS 27.1 SDK.
+#if compiler(>=6.4.1)
 @available(iOS 27.1, *)
 struct HingeInfo: Equatable {
     var status: DeviceHinge.Status
@@ -56,6 +58,7 @@ struct HingeInfo: Equatable {
         }
     }
 }
+#endif
 
 /// A safe-area inset drawn as a band along one edge.
 struct InsetBand: Identifiable, Equatable {
@@ -243,10 +246,12 @@ enum Readout {
         }
     }
 
+    #if compiler(>=6.4.1)
     @available(iOS 27.1, *)
     static func hinge(_ hinge: HingeInfo?, received: Bool) -> String {
         guard received else { return "waiting for update" }
         guard let hinge else { return "no hinge" }
         return "\(hinge.statusName) \(Int(hinge.degrees.rounded()))°"
     }
+    #endif
 }

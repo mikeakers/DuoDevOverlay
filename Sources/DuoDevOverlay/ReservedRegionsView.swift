@@ -8,6 +8,9 @@
 
 import SwiftUI
 
+// Swift 6.4.1 (Xcode 27.1) is the first toolchain with the iOS 27.1 SDK.
+#if compiler(>=6.4.1)
+
 @available(iOS 27.1, *)
 extension RegionInfo {
     init(_ region: ReservedRegion) {
@@ -170,3 +173,5 @@ private struct RegionView: View {
         }
     }
 }
+
+#endif
