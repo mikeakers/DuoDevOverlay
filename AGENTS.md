@@ -121,6 +121,12 @@ Bundle IDs:
 - **Schemes** are generated automatically.
 - **Stale package paths.** After changing a package path, delete the derived data you build with, or package resolution keeps reporting the old path.
 
+## Releases
+
+- Versions follow Apple's year-based style: `YY.minor.patch`, where `YY` is the last two digits of the year the release ships (`26.0.0` in 2026). Bump the minor version for new API and the patch version for fixes; the first release in a new year starts at `YY.0.0`.
+- Tags have no `v` prefix (`26.0.0`, not `v26.0.0`). Publish a GitHub release for each tag with `gh release create <tag> --verify-tag`.
+- `1.0.0` and `1.1.0` predate this scheme.
+
 ## Git
 
 - `main` is the default branch. The remote is `https://github.com/mikeakers/DuoDevOverlay` (public).
